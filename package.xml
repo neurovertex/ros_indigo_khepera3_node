@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<package>
+  <name>khepera_node</name>
+  <version>0.0.1</version>
+  <description>Package using the Player networked interface to publish URG (LaserScan) and odometry information on ROS from a Khepera3 robot</description>
+
+  <maintainer email="nv@neuroveretx.eu">Neurovertex</maintainer>
+  <author email="nv@neuroveretx.eu">Neurovertex</author>
+
+  <license>WTFPL</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>roscpp</build_depend>
+  <build_depend>tf2</build_depend>
+  <run_depend>roscpp</run_depend>
+  <run_depend>tf2</run_depend>
+  <export>
+  </export>
+</package>
