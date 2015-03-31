@@ -24,6 +24,19 @@ TODO
 - Support for commanding the robot through ROS.
 - Publishing odometry messages as nvg_msgs/Odometry as well
 
+Results
+-------
+
+Here's the SLAM-generated map obtained
+
+![The map](http://i.imgur.com/3h9wdRm.png)
+
+Here's what the robot looks like :
+
+![The robot](http://i.imgur.com/MjMiPSVl.jpg)
+
+<sup><sup>Yeah I really need to find a shorter cable</sup></sup>
+
 -----------------------
 
 In theory, this code should work for any robot supporting Player with position2d and laser drivers, Only the relative position of the laser to the robot frame might need to be changed. To be tested.
