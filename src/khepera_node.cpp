@@ -2,12 +2,14 @@
 #include <unistd.h>
 #define BOOST_SIGNALS_NO_DEPRECATION_WARNING 1 // screw you boost I never asked for this
 #include <ros/ros.h>
+#include <tf/tf.h>
 #include <tf2_ros/transform_broadcaster.h>
 #include <libplayerc++/playerc++.h>
 
 #include <tf2/LinearMath/Quaternion.h>
 #include <geometry_msgs/TransformStamped.h>
 #include <geometry_msgs/Twist.h>
+#include <nav_msgs/Odometry.h>
 #include <sensor_msgs/LaserScan.h>
 
 using namespace std;
@@ -31,12 +33,19 @@ int main (int argc, char *argv[]) {
 	ros::NodeHandle node;
 
 	geometry_msgs::TransformStamped transformStamped, laserKhepera;
-	tf2::Quaternion q;
-	q.setRPY(0, 0, 0);
+	nav_msgs::Odometry odom;
+	tf::Quaternion q = tf::createIdentityQuaternion();
 
 	transformStamped.header.frame_id = "odom";
 	transformStamped.child_frame_id = "khepera";
 	transformStamped.transform.translation.z = 0.0;
+
+	odom.header.frame_id = "odom";
+	odom.child_frame_id = "khepera";
+	odom.pose.pose.position.z = 0;
+	odom.twist.twist.angular.x = 
+		odom.twist.twist.angular.y = 
+		odom.twist.twist.linear.z = 0;
 
 	laserKhepera.header.frame_id = "khepera";
 	laserKhepera.child_frame_id = "laser";
@@ -86,15 +95,19 @@ int main (int argc, char *argv[]) {
 
 		tf2_ros::TransformBroadcaster tfb;
 		ros::Publisher scanb = node.advertise<sensor_msgs::LaserScan>("scan", 10);
+		ros::Publisher odomb = node.advertise<nav_msgs::Odometry>("odom", 10);
+
 		ros::Subscriber cmdsub = node.subscribe("khepera/cmd_vel", 1, cmd_callback);
 
 		while (node.ok()) {
-			transformStamped.header.stamp = ros::Time::now();
-			transformStamped.header.seq = seq;
-			laserKhepera.header.stamp = ros::Time::now();
-			laserKhepera.header.seq = seq;
-			scan.header.stamp = ros::Time::now();
-			scan.header.seq = seq;
+			transformStamped.header.stamp = 
+				laserKhepera.header.stamp = 
+						scan.header.stamp = 
+						odom.header.stamp = ros::Time::now();
+			transformStamped.header.seq =
+				laserKhepera.header.seq =
+						scan.header.seq =
+						odom.header.seq = seq;
 			ros::spinOnce();
 			if ((seq-last_seq) == CMD_PERSISTENCY) {
 				pos2d.SetSpeed(0, 0, 0);
@@ -103,13 +116,15 @@ int main (int argc, char *argv[]) {
 			
 			try {
 				robot.Read();
-				transformStamped.transform.translation.x = pos2d.GetXPos();
-				transformStamped.transform.translation.y = pos2d.GetYPos();
-				q.setRPY(0, 0, pos2d.GetYaw());
-				transformStamped.transform.rotation.x = q.x();
-				transformStamped.transform.rotation.y = q.y();
-				transformStamped.transform.rotation.z = q.z();
-				transformStamped.transform.rotation.w = q.w();
+				odom.pose.pose.position.x = transformStamped.transform.translation.x = pos2d.GetXPos();
+				odom.pose.pose.position.y = transformStamped.transform.translation.y = pos2d.GetYPos();
+
+				transformStamped.transform.rotation = tf::createQuaternionMsgFromYaw(pos2d.GetYaw());
+				odom.pose.pose.orientation = tf::createQuaternionMsgFromYaw(pos2d.GetYaw());
+
+				odom.twist.twist.linear.x = pos2d.GetXSpeed();
+				odom.twist.twist.linear.y = pos2d.GetYSpeed();
+				odom.twist.twist.angular.z = pos2d.GetYawSpeed();
 //				cout << transformStamped.transform.translation.x <<":"<< transformStamped.transform.translation.y << endl;
 
 				scan.range_min = laser.GetMinLeft();
@@ -128,11 +143,12 @@ int main (int argc, char *argv[]) {
 			tfb.sendTransform(transformStamped);
 			tfb.sendTransform(laserKhepera);
 			scanb.publish(scan);
+			odomb.publish(odom);
 			rate.sleep();
 			seq ++;
 		}
 	} catch (const PlayerError &e) {
-		cout << endl << "PlayerError : "<< e << endl;
+		cout << "\nPlayerError : "<< e << endl;
 	}
 	cout << "Exitting" << endl;
 }
