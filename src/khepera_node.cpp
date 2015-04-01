@@ -1,11 +1,13 @@
 #include <iostream>
 #include <unistd.h>
 #define BOOST_SIGNALS_NO_DEPRECATION_WARNING 1 // screw you boost I never asked for this
-#include <libplayerc++/playerc++.h>
 #include <ros/ros.h>
-#include <tf2/LinearMath/Quaternion.h>
 #include <tf2_ros/transform_broadcaster.h>
+#include <libplayerc++/playerc++.h>
+
+#include <tf2/LinearMath/Quaternion.h>
 #include <geometry_msgs/TransformStamped.h>
+#include <geometry_msgs/Twist.h>
 #include <sensor_msgs/LaserScan.h>
 
 using namespace std;
@@ -13,6 +15,16 @@ using namespace PlayerCc;
 
 // Player won't tell me how much that is so I had to set up a constant
 #define URG_LX04_SCANNING_FREQ 10
+#define CMD_PERSISTENCY 20
+
+static Position2dProxy *pos2d_ptr;
+static int seq, last_seq;
+
+void cmd_callback(const geometry_msgs::Twist& cmd) {
+	cout << "\nReceived cmd : " << cmd << endl;
+	pos2d_ptr->SetSpeed(cmd.linear.x, cmd.linear.y, cmd.angular.z);
+	last_seq = seq;
+}
 
 int main (int argc, char *argv[]) {
 	ros::init(argc, argv, "khepera_node");
@@ -42,15 +54,17 @@ int main (int argc, char *argv[]) {
 		server = argv[1];
 	}
 	cout << "Connecting to server at "<< server << endl;
-	int seq = 0;
+	seq = 0;
+	last_seq = -255;
 
 	try {
 		PlayerClient robot(server);
 		Position2dProxy pos2d(&robot,0);
+		pos2d_ptr = &pos2d;
 		LaserProxy laser(&robot,0);
-		ros::Rate rate(10.0);
 		sensor_msgs::LaserScan scan;
 		scan.header.frame_id = "laser";
+		ros::Rate rate(10.0);
 
 		do {
 			robot.Read();
@@ -72,14 +86,20 @@ int main (int argc, char *argv[]) {
 
 		tf2_ros::TransformBroadcaster tfb;
 		ros::Publisher scanb = node.advertise<sensor_msgs::LaserScan>("scan", 10);
+		ros::Subscriber cmdsub = node.subscribe("khepera/cmd_vel", 1, cmd_callback);
 
 		while (node.ok()) {
 			transformStamped.header.stamp = ros::Time::now();
-			transformStamped.header.seq = seq ++;
+			transformStamped.header.seq = seq;
 			laserKhepera.header.stamp = ros::Time::now();
-			laserKhepera.header.seq = seq ++;
+			laserKhepera.header.seq = seq;
 			scan.header.stamp = ros::Time::now();
-			scan.header.seq = seq ++;
+			scan.header.seq = seq;
+			ros::spinOnce();
+			if ((seq-last_seq) == CMD_PERSISTENCY) {
+				pos2d.SetSpeed(0, 0, 0);
+				cout << "\nResetting speed" << endl;
+			}
 			
 			try {
 				robot.Read();
@@ -103,11 +123,13 @@ int main (int argc, char *argv[]) {
 			} catch (const PlayerError &e) {
 				cout << endl << "PlayerError : "<< e << endl;
 			}
-			cout << '\r' << seq << '\t' << transformStamped.transform.translation.x <<":"<< transformStamped.transform.translation.y << flush;
+			printf("\r% 7d (% 7d)\t%3.3f:%3.3f", seq, seq-last_seq, transformStamped.transform.translation.x, transformStamped.transform.translation.y);
+			fflush(stdout);
 			tfb.sendTransform(transformStamped);
 			tfb.sendTransform(laserKhepera);
 			scanb.publish(scan);
 			rate.sleep();
+			seq ++;
 		}
 	} catch (const PlayerError &e) {
 		cout << endl << "PlayerError : "<< e << endl;

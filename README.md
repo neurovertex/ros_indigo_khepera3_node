@@ -6,7 +6,8 @@ This node retreives odometry and LaserScan (LIDAR) information from a Khepera3 o
 Topics
 ------
 
-Scans (from the urglaser driver - or any Player laser-providing driver) are published as LaserScan messages on the /laser topic at 10Hz and associated with the *laser* frame.
+ - published : /laser Scans (from the urglaser driver - or any Player laser-providing driver) are published as LaserScan messages on the /laser topic at 10Hz and associated with the *laser* frame.
+ - subscribed : /khepera/cmd_vel is listened to for velocity commands (turtlebot/turtlesim-like). If no command is received through the topic for 2 seconds, speed is reset to 0.
 
 Frames
 ------
@@ -21,7 +22,6 @@ Included is a gmapping.launch file that launches everything needed to run [Gmapp
 TODO
 ----
 
-- Support for commanding the robot through ROS.
 - Publishing odometry messages as nvg_msgs/Odometry as well
 
 Results
