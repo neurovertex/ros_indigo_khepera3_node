@@ -1,8 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
 <launch>
-	<node pkg="khepera_node" type="khepera_node" name="khepera_node" args="$(arg ip)" />
-	<node pkg="tf" type="static_transform_publisher" name="worldmap_transform" args="0 0 0 0 0 0 map world 10" />
+	<arg name="ip" default="127.0.0.1" />
+	<arg name="name" default="khepera_node" />
+	<include file="$(find khepera_node)/launch/khepera_node.launch">
+		<arg name="ip" value="$(arg ip)"/>
+		<arg name="name" value="$(arg name)" />
+	</include>
 	<node pkg="gmapping" type="slam_gmapping" name="slam_gmapping" output="screen">
-		<param name="base_frame" value="khepera"/>
+		<param name="base_frame" value="base_link"/>
 		<param name="odom_frame" value="odom"/>
 		<param name="map_update_interval" value="0.5"/>
 		<param name="maxUrange" value="16.0"/>

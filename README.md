@@ -8,7 +8,11 @@ Topics
 
  - /laser : Scans (from the urglaser driver - or any Player laser-providing driver) are published as LaserScan messages on the /laser topic at 10Hz and associated with the *laser* frame.
  - /odom : Odometry data, in addition to being published as a tf transformation, is also published as a nav_msgs::Odometry message, to account for speed information. Note that the khepera doesn't seem to actually measure speed from its wheels but assume it moves as its motors should make it do (pushing it will change reported position but speed will stay null).
+<<<<<<< HEAD
  - /khepera/cmd_vel is listened to for velocity commands (turtlebot/turtlesim-like). If no command is received through the topic for 2 seconds, speed is reset to 0.
+=======
+ -/cmd_vel is listened to for velocity commands (turtlebot/turtlesim-like). If no command is received through the topic for 2 seconds, speed is reset to 0.
+>>>>>>> Changed Player IP parameter from command-line argument to ROS param ~ip. Added boolean ~urg to dis/enable URG reading from player (mostly for testing purposes with odometry). Changed command topic from /[node name]/cmd_vel to /cmd_vel
 
 Frames
 ------
