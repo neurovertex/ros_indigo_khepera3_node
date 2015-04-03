@@ -19,10 +19,15 @@ Frames
 
 This node uses *khepera* as its base frame (base_link for SLAM nodes), and publishes *khepera*->*odom* information from Odometry, *odom*being ideally a fixed point at the origin of the map, but in practice has to be corrected by location algorithms to account for location error. It also publishes *khepera*->*laser*, which is a fixed translation of {0.02, 0, 0.10}, accounting for the offset between the base of the robot and the laser.
 
-Launch sample
+Launch files
 -------------
 
-Included is a gmapping.launch file that launches everything needed to run [Gmapping](http://wiki.ros.org/slam_gmapping) on the robot's data. Gmapping will generate a map and publish the *odom*->*map* transform, giving the corrected absolute position of the robot on the map.
+Included are severeal launch files.
+
+ - khepera_node.launch starts the node plus a tf/static_tranform_publisher to set *map*=*world*. It is included by all others.
+ - gmapping.launch file that launches everything needed to run [Gmapping](http://wiki.ros.org/slam_gmapping) on the robot's data. Gmapping will generate a map and publish the *odom*->*map* transform, giving the corrected absolute position of the robot on the map.
+ - amcl.launch lauches amcl to locate the robot on a static map (e.g built with Gmapping). You'll need to publish the static map (e.g map_server) separately.
+ - move\_base starts amcl and move\_base, to control your robot. If everything works as intended, your robot should be capable of autonomous navigation with that.
 
 Results
 -------

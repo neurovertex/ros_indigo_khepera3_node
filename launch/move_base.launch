@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<launch>
+	<arg name="ip" default="127.0.0.1" />
+	<arg name="name" default="khepera_node" />
+	<include file="$(find khepera_node)/launch/amcl.launch">
+		<arg name="ip" value="$(arg ip)"/>
+		<arg name="name" value="$(arg name)" />
+	</include>
+	<node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
+		<rosparam file="$(find khepera_node)/params/costmap_common.yaml" command="load" ns="global_costmap"/>
+		<rosparam file="$(find khepera_node)/params/costmap_common.yaml" command="load" ns="local_costmap"/>
+		<rosparam file="$(find khepera_node)/params/costmap.yaml" command="load"/>
+	</node>
+</launch>
